@@ -11,6 +11,7 @@ import { LandlordsPage } from "./pages/landlords";
 import { CustomersPage } from "./pages/customers";
 import { TaxesPage } from "./pages/taxes";
 import { BookingsPage } from "./pages/bookings";
+import { CampaignsPage } from "./pages/campaigns";
 
 // Layout
 import MainLayout from "./components/layout/MainLayout";
@@ -47,7 +48,7 @@ function App() {
 
             {/* Operations */}
             <Route path="bookings" element={<BookingsPage />} />
-            <Route path="campaigns" element={<PlaceholderPage title="Campaigns" />} />
+            <Route path="campaigns" element={<CampaignsPage />} />
             <Route path="purchase-orders" element={<PlaceholderPage title="Purchase Orders" />} />
             <Route path="invoices" element={<PlaceholderPage title="Invoices" />} />
             <Route path="audit-media" element={<PlaceholderPage title="Audit Media" />} />

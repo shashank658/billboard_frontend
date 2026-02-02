@@ -1,12 +1,21 @@
 import { apiService } from './api';
-import type { Booking, PaginationParams, PaginationInfo } from '../types';
+import type { PaginationParams, PaginationInfo, BookingStatus } from '../types';
 
-export interface BookingResponse {
-  data: Booking[];
-  pagination: PaginationInfo;
-}
-
-export interface BookingWithDetails extends Booking {
+export interface BookingWithDetails {
+  id: string;
+  referenceCode: string;
+  customerId: string;
+  campaignId?: string;
+  billboardId: string;
+  slotNumber?: number;
+  startDate: string;
+  endDate: string;
+  notionalValue: string;
+  status: BookingStatus;
+  creativeRef?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
   customer?: {
     id: string;
     name: string;
@@ -27,6 +36,11 @@ export interface BookingWithDetails extends Booking {
     name: string;
     referenceCode: string;
   };
+}
+
+export interface BookingResponse {
+  data: BookingWithDetails[];
+  pagination: PaginationInfo;
 }
 
 export interface CalendarBooking {
@@ -123,8 +137,8 @@ export const bookingService = {
   },
 
   updateBookingStatus: async (id: string, status: string) => {
-    const response = await apiService.patch<Booking>(`/bookings/${id}/status`, { status });
-    return response.data as Booking;
+    const response = await apiService.patch<BookingWithDetails>(`/bookings/${id}/status`, { status });
+    return response.data as BookingWithDetails;
   },
 
   checkAvailability: async (

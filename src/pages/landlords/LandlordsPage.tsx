@@ -236,7 +236,6 @@ export default function LandlordsPage() {
   };
 
   const isStep1Valid = () => formData.name.trim().length > 0;
-  const isStep2Valid = () => formData.rentAmount > 0 && formData.paymentFrequency;
 
   const stepLabels = ['Basic Info', 'Bank & Payment'];
 
