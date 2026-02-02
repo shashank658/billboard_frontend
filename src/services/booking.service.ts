@@ -182,4 +182,12 @@ export const bookingService = {
     const response = await apiService.get<DateRangeBooking[]>(`/bookings/date-range?${params}`);
     return response.data as DateRangeBooking[];
   },
+
+  shortCloseBooking: async (id: string, actualEndDate: string, reason: string) => {
+    const response = await apiService.post<BookingWithDetails>(`/bookings/${id}/short-close`, {
+      actualEndDate,
+      reason,
+    });
+    return response.data as BookingWithDetails;
+  },
 };

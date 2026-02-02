@@ -136,33 +136,36 @@ class PurchaseOrderService {
     if (params.dateFrom) queryParams.append('dateFrom', params.dateFrom);
     if (params.dateTo) queryParams.append('dateTo', params.dateTo);
 
-    const response = await apiService.get<PurchaseOrdersResponse>(
+    const response = await apiService.getPaginated<PurchaseOrderWithDetails>(
       `/purchase-orders?${queryParams.toString()}`
     );
-    return response;
+    return {
+      data: response.data || [],
+      pagination: response.pagination,
+    };
   }
 
   async getPurchaseOrderById(id: string): Promise<PurchaseOrderWithDetails> {
-    const response = await apiService.get<{ data: PurchaseOrderWithDetails }>(
+    const response = await apiService.get<PurchaseOrderWithDetails>(
       `/purchase-orders/${id}`
     );
-    return response.data;
+    return response.data as PurchaseOrderWithDetails;
   }
 
   async createPurchaseOrder(data: CreatePurchaseOrderDto): Promise<PurchaseOrderWithDetails> {
-    const response = await apiService.post<{ data: PurchaseOrderWithDetails }>(
+    const response = await apiService.post<PurchaseOrderWithDetails>(
       '/purchase-orders',
       data
     );
-    return response.data;
+    return response.data as PurchaseOrderWithDetails;
   }
 
   async updatePurchaseOrder(id: string, data: UpdatePurchaseOrderDto): Promise<PurchaseOrderWithDetails> {
-    const response = await apiService.put<{ data: PurchaseOrderWithDetails }>(
+    const response = await apiService.put<PurchaseOrderWithDetails>(
       `/purchase-orders/${id}`,
       data
     );
-    return response.data;
+    return response.data as PurchaseOrderWithDetails;
   }
 
   async deletePurchaseOrder(id: string): Promise<void> {
@@ -197,10 +200,10 @@ class PurchaseOrderService {
     const queryParams = new URLSearchParams();
     if (customerId) queryParams.append('customerId', customerId);
 
-    const response = await apiService.get<{ data: EligibleBooking[] }>(
+    const response = await apiService.get<EligibleBooking[]>(
       `/purchase-orders/eligible-bookings?${queryParams.toString()}`
     );
-    return response.data;
+    return response.data as EligibleBooking[];
   }
 
   async calculateProRata(
@@ -214,10 +217,10 @@ class PurchaseOrderService {
       actualEndDate,
     });
 
-    const response = await apiService.get<{ data: ProRataCalculation }>(
+    const response = await apiService.get<ProRataCalculation>(
       `/purchase-orders/calculate-pro-rata?${queryParams.toString()}`
     );
-    return response.data;
+    return response.data as ProRataCalculation;
   }
 }
 
