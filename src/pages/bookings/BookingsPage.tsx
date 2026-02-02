@@ -13,6 +13,8 @@ import {
   Clock,
   User,
   Monitor,
+  StopCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -115,8 +117,10 @@ export function BookingsPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isShortCloseOpen, setIsShortCloseOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null);
   const [formData, setFormData] = useState<CreateBookingDto>(initialFormData);
+  const [shortCloseData, setShortCloseData] = useState({ actualEndDate: '', reason: '' });
   const [saving, setSaving] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const totalSteps = 2;
@@ -347,6 +351,53 @@ export function BookingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleShortClose = async () => {
+    if (!selectedBooking) return;
+    try {
+      setSaving(true);
+      await bookingService.shortCloseBooking(
+        selectedBooking.id,
+        shortCloseData.actualEndDate,
+        shortCloseData.reason
+      );
+      toast({
+        title: 'Success',
+        description: 'Booking short closed successfully',
+      });
+      setIsShortCloseOpen(false);
+      setSelectedBooking(null);
+      setShortCloseData({ actualEndDate: '', reason: '' });
+      fetchBookings();
+      fetchCalendarBookings();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to short close booking';
+      toast({
+        title: 'Error',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openShortCloseDialog = (booking: BookingWithDetails) => {
+    setSelectedBooking(booking);
+    // Set default actual end date to today or start date (whichever is later)
+    const today = new Date();
+    const startDate = new Date(booking.startDate);
+    const defaultDate = today > startDate ? today : startDate;
+    setShortCloseData({
+      actualEndDate: defaultDate.toISOString().split('T')[0],
+      reason: '',
+    });
+    setIsShortCloseOpen(true);
+  };
+
+  const canShortClose = (booking: BookingWithDetails) => {
+    return ['created', 'confirmed', 'active'].includes(booking.status);
   };
 
   const openEditDialog = (booking: BookingWithDetails) => {
@@ -734,6 +785,16 @@ export function BookingsPage() {
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(booking)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
+                        {canShortClose(booking) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openShortCloseDialog(booking)}
+                            title="Short Close"
+                          >
+                            <StopCircle className="h-4 w-4 text-orange-500" />
+                          </Button>
+                        )}
                         {booking.status === 'created' && (
                           <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(booking)}>
                             <Trash2 className="h-4 w-4" />
@@ -1102,6 +1163,19 @@ export function BookingsPage() {
             <Button variant="outline" onClick={() => setIsViewOpen(false)}>
               Close
             </Button>
+            {selectedBooking && canShortClose(selectedBooking) && (
+              <Button
+                variant="outline"
+                className="border-orange-500 text-orange-500 hover:bg-orange-50"
+                onClick={() => {
+                  setIsViewOpen(false);
+                  openShortCloseDialog(selectedBooking);
+                }}
+              >
+                <StopCircle className="h-4 w-4 mr-2" />
+                Short Close
+              </Button>
+            )}
             {selectedBooking && (
               <Button
                 onClick={() => {
@@ -1112,6 +1186,84 @@ export function BookingsPage() {
                 Edit
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Short Close Dialog */}
+      <Dialog open={isShortCloseOpen} onOpenChange={(open) => {
+        setIsShortCloseOpen(open);
+        if (!open) {
+          setShortCloseData({ actualEndDate: '', reason: '' });
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Short Close Booking
+            </DialogTitle>
+            <DialogDescription>
+              End this booking early. The booking will be marked as completed with the new end date.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedBooking && (
+            <div className="space-y-4">
+              <div className="bg-muted rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Booking:</span>
+                  <span className="font-mono font-medium">{selectedBooking.referenceCode}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Original Period:</span>
+                  <span>{formatDate(selectedBooking.startDate)} - {formatDate(selectedBooking.endDate)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Billboard:</span>
+                  <span>{selectedBooking.billboard?.name}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="actualEndDate">Actual End Date *</Label>
+                <Input
+                  id="actualEndDate"
+                  type="date"
+                  value={shortCloseData.actualEndDate}
+                  min={selectedBooking.startDate}
+                  max={new Date(new Date(selectedBooking.endDate).getTime() - 86400000).toISOString().split('T')[0]}
+                  onChange={(e) => setShortCloseData({ ...shortCloseData, actualEndDate: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Must be before the original end date ({formatDate(selectedBooking.endDate)})
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reason">Reason *</Label>
+                <Textarea
+                  id="reason"
+                  value={shortCloseData.reason}
+                  onChange={(e) => setShortCloseData({ ...shortCloseData, reason: e.target.value })}
+                  placeholder="Enter reason for short closing..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsShortCloseOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleShortClose}
+              disabled={saving || !shortCloseData.actualEndDate || !shortCloseData.reason.trim()}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              {saving ? 'Processing...' : 'Short Close'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
