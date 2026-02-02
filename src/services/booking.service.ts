@@ -10,6 +10,7 @@ export interface BookingWithDetails {
   slotNumber?: number;
   startDate: string;
   endDate: string;
+  actualEndDate?: string | null;
   notionalValue: string;
   status: BookingStatus;
   creativeRef?: string;
