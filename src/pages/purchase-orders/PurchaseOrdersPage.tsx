@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Search, FileText, Eye, Calculator } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, FileText, Eye, Calculator, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -292,6 +292,27 @@ export default function PurchaseOrdersPage() {
     }
   };
 
+  const handleDownload = async (po: PurchaseOrderWithDetails) => {
+    try {
+      toast({
+        title: 'Downloading',
+        description: 'Generating PDF...',
+      });
+      await purchaseOrderService.downloadPDF(po.id, po.poNumber);
+      toast({
+        title: 'Success',
+        description: 'PDF downloaded successfully',
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to download PDF';
+      toast({
+        title: 'Error',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const resetCreateForm = () => {
     setCreateFormData(initialCreateFormData);
     setSelectedBooking(null);
@@ -498,7 +519,16 @@ export default function PurchaseOrdersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleDownload(po)}
+                            title="Download PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => openViewDialog(po)}
+                            title="View details"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -506,6 +536,7 @@ export default function PurchaseOrdersPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => openEditDialog(po)}
+                            title="Edit"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -513,6 +544,7 @@ export default function PurchaseOrdersPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => openDeleteDialog(po)}
+                            title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -930,16 +962,27 @@ export default function PurchaseOrdersPage() {
               )}
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="flex justify-between sm:justify-between">
             <Button variant="outline" onClick={() => setIsViewOpen(false)}>
               Close
             </Button>
-            <Button onClick={() => {
-              setIsViewOpen(false);
-              if (selectedPO) openEditDialog(selectedPO);
-            }}>
-              Edit
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (selectedPO) handleDownload(selectedPO);
+                }}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </Button>
+              <Button onClick={() => {
+                setIsViewOpen(false);
+                if (selectedPO) openEditDialog(selectedPO);
+              }}>
+                Edit
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

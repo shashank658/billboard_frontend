@@ -169,6 +169,30 @@ class PurchaseOrderService {
     await apiService.delete(`/purchase-orders/${id}`);
   }
 
+  async downloadPDF(id: string, poNumber: string): Promise<void> {
+    const token = localStorage.getItem('accessToken');
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/purchase-orders/${id}/download`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download PDF');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${poNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   async getEligibleBookings(customerId?: string): Promise<EligibleBooking[]> {
     const queryParams = new URLSearchParams();
     if (customerId) queryParams.append('customerId', customerId);
