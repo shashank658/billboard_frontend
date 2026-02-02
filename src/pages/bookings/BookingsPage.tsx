@@ -400,6 +400,11 @@ export function BookingsPage() {
     return ['created', 'confirmed', 'active'].includes(booking.status);
   };
 
+  const canEditBooking = (booking: BookingWithDetails) => {
+    // Cannot edit completed, po_generated, or invoiced bookings
+    return !['completed', 'po_generated', 'invoiced'].includes(booking.status);
+  };
+
   const openEditDialog = (booking: BookingWithDetails) => {
     setSelectedBooking(booking);
     const bb = billboards.find(b => b.id === booking.billboardId);
@@ -782,9 +787,11 @@ export function BookingsPage() {
                         <Button variant="ghost" size="icon" onClick={() => openViewDialog(booking)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(booking)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        {canEditBooking(booking) && (
+                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(booking)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                         {canShortClose(booking) && (
                           <Button
                             variant="ghost"
@@ -1135,12 +1142,26 @@ export function BookingsPage() {
                 <div className="flex items-start gap-3">
                   <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Period</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedBooking.actualEndDate ? 'Original Period' : 'Period'}
+                    </p>
                     <p className="font-medium">
                       {formatDate(selectedBooking.startDate)} - {formatDate(selectedBooking.endDate)}
                     </p>
                   </div>
                 </div>
+
+                {selectedBooking.actualEndDate && (
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-orange-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Actual End Date (Short Closed)</p>
+                      <p className="font-medium text-orange-600">
+                        {formatDate(selectedBooking.actualEndDate)}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -1176,7 +1197,7 @@ export function BookingsPage() {
                 Short Close
               </Button>
             )}
-            {selectedBooking && (
+            {selectedBooking && canEditBooking(selectedBooking) && (
               <Button
                 onClick={() => {
                   setIsViewOpen(false);

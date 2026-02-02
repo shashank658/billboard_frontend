@@ -6,6 +6,7 @@ export interface PurchaseOrderBooking {
   referenceCode: string;
   startDate: string;
   endDate: string;
+  actualEndDate?: string | null;
   notionalValue: string;
   status: string;
   slotNumber?: number;
@@ -65,6 +66,7 @@ export interface EligibleBooking {
   referenceCode: string;
   startDate: string;
   endDate: string;
+  actualEndDate?: string | null;
   notionalValue: string;
   status: string;
   slotNumber?: number;

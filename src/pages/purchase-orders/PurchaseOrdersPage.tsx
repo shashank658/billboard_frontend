@@ -358,11 +358,13 @@ export default function PurchaseOrdersPage() {
   const handleBookingSelect = (bookingId: string) => {
     const booking = eligibleBookings.find(b => b.id === bookingId);
     setSelectedBooking(booking || null);
+    // Use actualEndDate if booking was short-closed, otherwise use original endDate
+    const effectiveEndDate = booking?.actualEndDate || booking?.endDate || '';
     setCreateFormData(prev => ({
       ...prev,
       bookingId,
       actualStartDate: booking?.startDate || '',
-      actualEndDate: booking?.endDate || '',
+      actualEndDate: effectiveEndDate,
       actualValue: booking?.notionalValue || '',
     }));
     setProRataCalc(null);
@@ -662,6 +664,14 @@ export default function PurchaseOrdersPage() {
                       {formatDate(selectedBooking.startDate)} - {formatDate(selectedBooking.endDate)}
                     </p>
                   </div>
+                  {selectedBooking.actualEndDate && (
+                    <div>
+                      <span className="text-muted-foreground">Short Closed End Date:</span>
+                      <p className="font-medium text-orange-600">
+                        {formatDate(selectedBooking.actualEndDate)}
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <span className="text-muted-foreground">Notional Value:</span>
                     <p className="font-medium">{formatCurrency(selectedBooking.notionalValue)}</p>
@@ -878,6 +888,14 @@ export default function PurchaseOrdersPage() {
                         {formatDate(selectedPO.booking?.startDate)} - {formatDate(selectedPO.booking?.endDate)}
                       </p>
                     </div>
+                    {selectedPO.booking?.actualEndDate && (
+                      <div>
+                        <span className="text-muted-foreground">Short Closed:</span>
+                        <p className="font-medium text-orange-600">
+                          {formatDate(selectedPO.booking.actualEndDate)}
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <span className="text-muted-foreground">Notional Value:</span>
                       <p className="font-medium">{formatCurrency(selectedPO.booking?.notionalValue || '0')}</p>
